@@ -1,7 +1,14 @@
-module GraphQL exposing (query, mutation, apply, maybeEncode)
+module GraphQL exposing
+    ( query
+    , mutation
+    , apply
+    , maybeEncode )
 
 {-| This library provides support functions used by
     [elm-graphql](https://github.com/jahewson/elm-graphql), the GraphQL code generator for Elm.
+
+# Helper functions
+@docs query, mutation, apply, maybeEncode
 
 -}
 
@@ -57,7 +64,7 @@ buildRequestWithQuery verb url query operation variables =
 
 
 buildRequestWithBody : String -> String -> String -> String -> Json.Encode.Value -> Http.Request
-buildRequestWithBody url query operation variables =
+buildRequestWithBody verb url query operation variables =
     let
         params =
             Json.Encode.object
@@ -78,7 +85,6 @@ buildRequestWithBody url query operation variables =
 
 queryResult : Decoder a -> Decoder a
 queryResult decoder =
-    -- todo: check for success/failure of the query
     oneOf
         [ at [ "data" ] decoder
         , fail "Expected 'data' field"
