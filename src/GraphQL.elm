@@ -1,9 +1,8 @@
-module GraphQL exposing (..)
+module GraphQL exposing (query, mutation, apply, maybeEncode)
 
-{-| Todo: Write documentation for this module.
+{-| This library provides support functions used by
+    [elm-graphql](https://github.com/jahewson/elm-graphql), the GraphQL code generator for Elm.
 
-# Todo: Exports
-@docs query, queryResult, apply
 -}
 
 import Task exposing (Task)
@@ -12,28 +11,20 @@ import Json.Encode
 import Http
 
 
-{-| Todo: document this
--}
-type alias ID =
-    String
-
-
-{-| Todo: document this function.
+{-| Executes a GraphQL query.
 -}
 query : String -> String -> String -> String -> Json.Encode.Value -> Decoder a -> Task Http.Error a
 query method url query operation variables decoder =
     fetch method url query operation variables decoder
 
 
-{-| Todo: document this function.
+{-| Executes a GraphQL mutation.
 -}
 mutation : String -> String -> String -> Json.Encode.Value -> Decoder a -> Task Http.Error a
 mutation url query operation variables decoder =
     fetch "POST" url query operation variables decoder
 
 
-{-| Todo: document this function.
--}
 fetch : String -> String -> String -> String -> Json.Encode.Value -> Decoder a -> Task Http.Error a
 fetch verb url query operation variables decoder =
     let
@@ -49,8 +40,6 @@ fetch verb url query operation variables decoder =
         Http.fromJson (queryResult decoder) (Http.send Http.defaultSettings request)
 
 
-{-| Todo: document this function.
--}
 buildRequestWithQuery : String -> String -> String -> String -> Json.Encode.Value -> Http.Request
 buildRequestWithQuery verb url query operation variables =
     let
@@ -67,8 +56,6 @@ buildRequestWithQuery verb url query operation variables =
         }
 
 
-{-| Todo: document this function.
--}
 buildRequestWithBody : String -> String -> String -> String -> Json.Encode.Value -> Http.Request
 buildRequestWithBody url query operation variables =
     let
@@ -89,8 +76,6 @@ buildRequestWithBody url query operation variables =
         }
 
 
-{-| Todo: document this function.
--}
 queryResult : Decoder a -> Decoder a
 queryResult decoder =
     -- todo: check for success/failure of the query
@@ -101,14 +86,14 @@ queryResult decoder =
         ]
 
 
-{-| Todo: document this function.
+{-| Combines two object decoders.
 -}
 apply : Decoder (a -> b) -> Decoder a -> Decoder b
 apply func value =
     object2 (<|) func value
 
 
-{-| Todo: document this function.
+{-| Encodes a `Maybe` as JSON, using `null` for `Nothing`.
 -}
 maybeEncode : (a -> Value) -> Maybe a -> Value
 maybeEncode e v =
