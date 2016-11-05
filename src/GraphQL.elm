@@ -1,8 +1,10 @@
-module GraphQL exposing
-    ( query
-    , mutation
-    , apply
-    , maybeEncode )
+module GraphQL
+    exposing
+        ( query
+        , mutation
+        , apply
+        , maybeEncode
+        )
 
 {-| This library provides support functions used by
     [elm-graphql](https://github.com/jahewson/elm-graphql), the GraphQL code generator for Elm.
@@ -18,37 +20,41 @@ import Json.Encode
 import Http
 
 
+type alias Header =
+    ( String, String )
+
+
 {-| Executes a GraphQL query.
 -}
-query : String -> String -> String -> String -> Json.Encode.Value -> Decoder a -> Task Http.Error a
-query method url query operation variables decoder =
-    fetch method url query operation variables decoder
+query : String -> String -> List Header -> String -> String -> Json.Encode.Value -> Decoder a -> Task Http.Error a
+query method url customHeaders query operation variables decoder =
+    fetch method url customHeaders query operation variables decoder
 
 
 {-| Executes a GraphQL mutation.
 -}
-mutation : String -> String -> String -> Json.Encode.Value -> Decoder a -> Task Http.Error a
-mutation url query operation variables decoder =
-    fetch "POST" url query operation variables decoder
+mutation : String -> List Header -> String -> String -> Json.Encode.Value -> Decoder a -> Task Http.Error a
+mutation url customHeaders query operation variables decoder =
+    fetch "POST" url customHeaders query operation variables decoder
 
 
-fetch : String -> String -> String -> String -> Json.Encode.Value -> Decoder a -> Task Http.Error a
-fetch verb url query operation variables decoder =
+fetch : String -> String -> List Header -> String -> String -> Json.Encode.Value -> Decoder a -> Task Http.Error a
+fetch verb url customHeaders query operation variables decoder =
     let
         request =
             (case verb of
                 "GET" ->
-                    buildRequestWithQuery verb url query operation variables
+                    buildRequestWithQuery verb url customHeaders query operation variables
 
                 _ ->
-                    buildRequestWithBody verb url query operation variables
+                    buildRequestWithBody verb url customHeaders query operation variables
             )
     in
         Http.fromJson (queryResult decoder) (Http.send Http.defaultSettings request)
 
 
-buildRequestWithQuery : String -> String -> String -> String -> Json.Encode.Value -> Http.Request
-buildRequestWithQuery verb url query operation variables =
+buildRequestWithQuery : String -> String -> List Header -> String -> String -> Json.Encode.Value -> Http.Request
+buildRequestWithQuery verb url customHeaders query operation variables =
     let
         params =
             [ ( "query", query )
@@ -57,14 +63,14 @@ buildRequestWithQuery verb url query operation variables =
             ]
     in
         { verb = verb
-        , headers = [ ( "Accept", "application/json" ) ]
+        , headers = [ ( "Accept", "application/json" ) ] ++ customHeaders
         , url = Http.url url params
         , body = Http.empty
         }
 
 
-buildRequestWithBody : String -> String -> String -> String -> Json.Encode.Value -> Http.Request
-buildRequestWithBody verb url query operation variables =
+buildRequestWithBody : String -> String -> List Header -> String -> String -> Json.Encode.Value -> Http.Request
+buildRequestWithBody verb url customHeaders query operation variables =
     let
         params =
             Json.Encode.object
@@ -78,6 +84,7 @@ buildRequestWithBody verb url query operation variables =
             [ ( "Accept", "application/json" )
             , ( "Content-Type", "application/json" )
             ]
+                ++ customHeaders
         , url = Http.url url []
         , body = Http.string <| Json.Encode.encode 0 params
         }
